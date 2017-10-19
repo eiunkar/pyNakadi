@@ -9,6 +9,12 @@ class NakadiException(Exception):
 
 
 class NakadiStream():
+    """
+    Iterator that generates batches. This stream is either created by a
+    get_subscription_events_stream method or get_event_type_events_stream
+    method.
+    """
+
     def __init__(self, response):
         self.response = response
         self.current_batch = None
@@ -22,12 +28,23 @@ class NakadiStream():
         return self.current_batch
 
     def get_stream_id(self):
+        """
+        :return: X-Nakadi-StreamId
+        """
         return self.response.headers['X-Nakadi-StreamId']
 
     def close(self):
+        """
+        Closes network stream.
+        :return:
+        """
         self.response.raw.close()
 
     def closed(self):
+        """
+        Flag if network stream is closed or not.
+        :return:
+        """
         return self.response.raw.closed
 
 
@@ -247,7 +264,7 @@ class NakadiClient:
         :param stream_timeout:
         :param stream_keep_alive_limit:
         :param cursors:
-        :return:
+        :return: NakadiStream
         """
         headers = self.authorization_header()
         if cursors is not None:
@@ -432,7 +449,7 @@ class NakadiClient:
         :param batch_flush_timeout:
         :param stream_timeout:
         :param stream_keep_alive_limit:
-        :return:
+        :return: NakadiStream
         """
         headers = self.authorization_header()
         page = "{}/subscriptions/{}/events".format(self.nakadi_url,
