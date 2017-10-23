@@ -5,7 +5,9 @@ import requests
 
 
 class NakadiException(Exception):
-    pass
+    def __init__(self, code, msg):
+        self.code = code
+        self.msg = msg
 
 
 class NakadiStream():
@@ -105,9 +107,10 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
-                "Error during get_event_types. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during get_event_types. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -125,9 +128,10 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
-                "Error during create_event_type. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during create_event_type. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         return True
 
     def get_event_type(self, event_type_name):
@@ -142,9 +146,10 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
-                "Error during get_event_type. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during get_event_type. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -162,9 +167,10 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
-                "Error during update_event_type. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during update_event_type. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -180,9 +186,10 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
-                "Error during delete_event_type. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during delete_event_type. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         return True
 
     def get_event_type_cursor_distances(self, event_type_name, query_map):
@@ -200,9 +207,10 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
-                "Error during get_event_type_cursor_distances. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during get_event_type_cursor_distances. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -221,9 +229,10 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
-                "Error during get_event_type_cursor_lag. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during get_event_type_cursor_lag. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -242,9 +251,10 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
-                "Error during post_events. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during post_events. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         return True
 
     def get_event_type_events_stream(self,
@@ -289,9 +299,10 @@ class NakadiClient:
         if response.status_code not in [200]:
             response_content_str = response.content.decode('utf-8')
             raise NakadiException(
-                "Error during get_subscription_events_stream. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during get_subscription_events_stream. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         return NakadiStream(response)
 
     def get_event_type_partitions(self, event_type_name):
@@ -307,9 +318,10 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
-                "Error during get_event_type_partitions. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during get_event_type_partitions. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -328,9 +340,10 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
-                "Error during get_event_type_partition. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during get_event_type_partition. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -362,9 +375,10 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
-                "Error during get_subscriptions. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during get_subscriptions. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -388,9 +402,10 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200, 201]:
             raise NakadiException(
-                "Error during create_subscription. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during create_subscription. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -407,9 +422,10 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
-                "Error during get_subscription. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during get_subscription. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -426,9 +442,10 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [204]:
             raise NakadiException(
-                "Error during delete_subscription. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during delete_subscription. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -475,9 +492,10 @@ class NakadiClient:
         if response.status_code not in [200]:
             response_content_str = response.content.decode('utf-8')
             raise NakadiException(
-                "Error during get_subscription_events_stream. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during get_subscription_events_stream. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         return NakadiStream(response)
 
     def get_subscription_stats(self, subscription_id):
@@ -493,9 +511,10 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
-                "Error during get_subscription_stats. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during get_subscription_stats. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -512,9 +531,10 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
-                "Error during get_subscription_stats. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during get_subscription_stats. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -537,9 +557,10 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [204]:
             raise NakadiException(
-                "Error during commit_subscription_cursors. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during commit_subscription_cursors. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         return True
 
     def reset_subscription_cursors(self, subscription_id, cursors):
@@ -558,7 +579,8 @@ class NakadiClient:
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [204]:
             raise NakadiException(
-                "Error during reset_subscription_cursors. "
-                + "Message from server:{} {}".format(response.status_code,
-                                                     response_content_str))
+                code=response.status_code,
+                msg="Error during reset_subscription_cursors. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
         return True
