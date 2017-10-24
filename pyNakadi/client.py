@@ -358,9 +358,12 @@ class NakadiClient:
         :param offset:
         :return:
         """
-        self.assert_it(limit >= 1, NakadiException('limit must be >=1'))
-        self.assert_it(limit <= 1000, NakadiException('limit must be <=1000'))
-        self.assert_it(offset >= 0, NakadiException('offset must be >=0'))
+        self.assert_it(limit >= 1,
+                       NakadiException(code=1, msg='limit must be >=1'))
+        self.assert_it(limit <= 1000,
+                       NakadiException(code=1, msg='limit must be <=1000'))
+        self.assert_it(offset >= 0,
+                       NakadiException(code=1, msg='offset must be >=0'))
         headers = self.authorization_header()
         page = "{}/subscriptions".format(self.nakadi_url)
         query_str = "?limit=" + str(limit) + '&offset=' + str(offset)
@@ -383,10 +386,38 @@ class NakadiClient:
         return result_map
 
     def get_next_subscriptions(self, subscriptions_response):
-        raise NotImplementedError
+        if 'next' not in subscriptions_response['_links']:
+            return subscriptions_response
+        headers = self.authorization_header()
+        page = '{}{}'.format(self.nakadi_url,
+                             subscriptions_response['_links']['next']['href'])
+        response = requests.get(page, headers=headers)
+        response_content_str = response.content.decode('utf-8')
+        if response.status_code not in [200]:
+            raise NakadiException(
+                code=response.status_code,
+                msg="Error during get_subscriptions. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
+        result_map = json.loads(response_content_str)
+        return result_map
 
     def get_prev_subscriptions(self, subscriptions_response):
-        raise NotImplementedError
+        if 'prev' not in subscriptions_response['_links']:
+            return subscriptions_response
+        headers = self.authorization_header()
+        page = '{}{}'.format(self.nakadi_url,
+                             subscriptions_response['_links']['prev']['href'])
+        response = requests.get(page, headers=headers)
+        response_content_str = response.content.decode('utf-8')
+        if response.status_code not in [200]:
+            raise NakadiException(
+                code=response.status_code,
+                msg="Error during get_subscriptions. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
+        result_map = json.loads(response_content_str)
+        return result_map
 
     def create_subscription(self, subscription_data_map):
         """
