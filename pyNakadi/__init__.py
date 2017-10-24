@@ -1,1 +1,1 @@
-from pyNakadi.client import NakadiClient
+from pyNakadi.client import NakadiClient, NakadiStream, NakadiException
