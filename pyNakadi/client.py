@@ -507,7 +507,7 @@ class NakadiClient:
             query_str += '&max_uncommitted_events={}'.format(
                 max_uncommitted_events)
         if batch_limit is not None:
-            query_str = '?batch_limit={}'.format(batch_limit)
+            query_str = '&batch_limit={}'.format(batch_limit)
         if stream_limit is not None:
             query_str += '&stream_limit={}'.format(stream_limit)
         if batch_flush_timeout is not None:
