@@ -283,7 +283,7 @@ class NakadiClient:
                                                  event_name)
         query_str = ''
         if batch_limit is not None:
-            query_str = '&batch_limit={}'.format(batch_limit)
+            query_str += '&batch_limit={}'.format(batch_limit)
         if stream_limit is not None:
             query_str += '&stream_limit={}'.format(stream_limit)
         if batch_flush_timeout is not None:
@@ -507,7 +507,7 @@ class NakadiClient:
             query_str += '&max_uncommitted_events={}'.format(
                 max_uncommitted_events)
         if batch_limit is not None:
-            query_str = '&batch_limit={}'.format(batch_limit)
+            query_str += '&batch_limit={}'.format(batch_limit)
         if stream_limit is not None:
             query_str += '&stream_limit={}'.format(stream_limit)
         if batch_flush_timeout is not None:
@@ -519,6 +519,7 @@ class NakadiClient:
                 stream_keep_alive_limit)
         if query_str != '':
             page += '?' + query_str[1:]
+        print(page)
         response = requests.get(page, headers=headers, stream=True)
         if response.status_code not in [200]:
             response_content_str = response.content.decode('utf-8')
