@@ -1,5 +1,8 @@
 import json
 from functools import reduce
+import logging
+import time
+import socket
 
 import requests
 
@@ -10,23 +13,164 @@ class NakadiException(Exception):
         self.msg = msg
 
 
+class EndOfStreamException(Exception):
+    pass
+
+
+class EndOfStreamException0(Exception):
+    pass
+
+
 class NakadiStream():
     """
     Iterator that generates batches. This stream is either created by a
     get_subscription_events_stream method or get_event_type_events_stream
     method.
     """
+    BUFFER_SIZE = 64 * 1024
 
     def __init__(self, response):
         self.response = response
+        self.sock = self.response.raw.connection.sock
+
+        self.raw_buffer = b''
+        self.buffer = b''
         self.current_batch = None
         self.__it = response.iter_lines(chunk_size=1)
+        self.sock.settimeout(30)
+        self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
+    def get_metrics(self):
+        strid = self.get_stream_id()
+
+        return {
+            'next': Metrics.get(strid + '.next'),
+            'chunk': Metrics.get(strid + '.chunk'),
+            'chunk1': Metrics.get(strid + '.chunk1'),
+            'chunk2': Metrics.get(strid + '.chunk2'),
+        }
+
+    def read_buffer(self):
+        buffer = self.sock.recv(self.BUFFER_SIZE)
+        return buffer
+
+    def read_chunk(self):
+
+        if b'\r\n' not in self.raw_buffer:
+
+            while self.raw_buffer[-2:] != b'\r\n':
+                received_byte = self.sock.recv(1)
+                if received_byte == b'':
+                    raise EndOfStreamException
+                self.raw_buffer += received_byte
+            size_b = self.raw_buffer[:-2]
+            self.raw_buffer = b''
+        else:
+            size_b, self.raw_buffer = self.raw_buffer.split(b'\r\n', 1)
+        size = int(size_b, 16) + 2
+
+        Metrics.timer_start(self.get_stream_id() + '.chunk2')
+        data_read_arr = list()
+        remaining = size
+        data_read = self.raw_buffer
+        data_read_arr.append(data_read)
+        remaining -= len(data_read)
+        while remaining > 0:
+            Metrics.timer_start(self.get_stream_id() + '.chunk1')
+            data_read = self.sock.recv(self.BUFFER_SIZE)
+            Metrics.timer_stop(self.get_stream_id() + '.chunk1')
+            if data_read == b'':
+                raise EndOfStreamException
+            data_read_arr.append(data_read)
+            remaining -= len(data_read)
+        if remaining != 0:
+            self.raw_buffer = data_read_arr[-1][remaining:]
+        else:
+            self.raw_buffer = b''
+        Metrics.timer_stop(self.get_stream_id() + '.chunk2')
+
+        if len(data_read) + remaining == 1:
+            data_read_arr[-2] = data_read_arr[-2][:-1]
+            data_read_arr.pop(-1)
+        else:
+            data_read_arr[-1] = data_read_arr[-1][:remaining - 2]
+        data_b = b''.join(data_read_arr)
+
+        if size == 0:
+            raise EndOfStreamException0
+
+
+        return data_b
+
+
+        # if b'\r\n' not in self.raw_buffer:
+        #
+        #     while 1:
+        #         data_read = self.sock.recv(self.BUFFER_SIZE)
+        #         data_read_arr.append(data_read)
+        #         if data_read == '':
+        #             raise StopIteration
+        #         if b'\r\n' in data_read:
+        #             self.raw_buffer.join(data_read_arr)
+        #             break
+        #
+        # # while b'\r\n' not in self.raw_buffer:
+        # #     data_read = self.sock.recv(1024 * 512)
+        # #     if data_read == '':
+        # #         raise StopIteration
+        # #     self.raw_buffer += data_read
+        # # print('raw_buffer_before_split:\n{}\n'.format(self.raw_buffer))
+        # size_b, self.raw_buffer = self.raw_buffer.split(b'\r\n', 1)
+        # size = int(size_b, 16)
+        # # print('chunk size: {} {}\n'.format(size_b, size))
+        # if len(self.raw_buffer) < size + 2:
+        #     data_read_arr = list()
+        #     while 1:
+        #         data_read = self.sock.recv(1024 * 512)
+        #         data_read_arr.append(data_read)
+        #
+        # while len(self.raw_buffer) < size + 2:
+        #     data_read = self.sock.recv(1024 * 512)
+        #     length = len(data_read)
+        #     if data_read == '':
+        #         raise StopIteration
+        #     self.raw_buffer += data_read
+        # data_b = self.raw_buffer[:size]
+        # self.raw_buffer = self.raw_buffer[size + 2:]
+        # # print('raw_buffer_after_chunk:\n{}\n'.format(self.raw_buffer))
+        # return data_b
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        self.current_batch = self.__it.__next__().decode('utf-8')
+        Metrics.timer_start(self.get_stream_id() + '.next')
+        data_read_arr = list()
+        data_read = self.buffer
+        data_read_arr.append(data_read)
+        while b'\n' not in data_read:
+            Metrics.timer_start(self.get_stream_id() + '.chunk')
+            data_read = self.read_chunk()
+            Metrics.timer_stop(self.get_stream_id() + '.chunk')
+            data_read_arr.append(data_read)
+        data_read_arr[-1], self.buffer = data_read_arr[-1].split(b'\n', 1)
+        data_b = b''.join(data_read_arr)
+        #
+        # if b'\n' not in self.buffer:
+        #     while 1:
+        #         data_read = self.read_chunk()
+        #         self.buffer += data_read
+        #         if b'\n' in data_read:
+        #             break
+        #
+        # # while b'\n' not in self.buffer:
+        # #     data_read = self.read_chunk()
+        # #     self.buffer += data_read
+        # # print('buffer_before_next:\n{}\n'.format(self.buffer))
+        # data_b, self.buffer = self.buffer.split(b'\n', 1)
+        # # print('buffer_after_next:\n{}\n'.format(self.buffer))
+        self.current_batch = data_b
+        Metrics.timer_stop(self.get_stream_id() + '.next')
         return self.current_batch
 
     def get_stream_id(self):
@@ -283,7 +427,7 @@ class NakadiClient:
                                                  event_name)
         query_str = ''
         if batch_limit is not None:
-            query_str += '&batch_limit={}'.format(batch_limit)
+            query_str = '&batch_limit={}'.format(batch_limit)
         if stream_limit is not None:
             query_str += '&stream_limit={}'.format(stream_limit)
         if batch_flush_timeout is not None:
@@ -520,7 +664,10 @@ class NakadiClient:
         if query_str != '':
             page += '?' + query_str[1:]
         print(page)
-        response = requests.get(page, headers=headers, stream=True)
+        s = requests.Session()
+        del (s.headers['Accept-Encoding'])
+        response = s.request(method='GET', url=page, headers=headers,
+                             stream=True)
         if response.status_code not in [200]:
             response_content_str = response.content.decode('utf-8')
             raise NakadiException(
@@ -616,3 +763,29 @@ class NakadiClient:
                     + "Message from server:{} {}".format(response.status_code,
                                                          response_content_str))
         return True
+
+
+class Metrics:
+    metric_cumulative = {}
+    metric_started = {}
+
+    @classmethod
+    def timer_start(cls, metric):
+        cls.metric_started[metric] = time.time()
+
+    @classmethod
+    def timer_stop(cls, metric):
+        stop_time = time.time()
+        if metric not in cls.metric_cumulative:
+            cls.metric_cumulative[metric] = 0
+        cls.metric_cumulative[metric] = cls.metric_cumulative[metric] + (
+            stop_time - cls.metric_started[metric])
+        del (cls.metric_started[metric])
+
+    @classmethod
+    def get(cls, metric):
+        return cls.metric_cumulative[metric]
+
+    @classmethod
+    def get_str(cls, metric):
+        return '{}: {}'.format(metric, cls.metric_cumulative[metric])
