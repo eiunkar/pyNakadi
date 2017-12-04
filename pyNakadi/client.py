@@ -1,5 +1,8 @@
 import json
 from functools import reduce
+import logging
+import time
+import socket
 
 
 import requests
@@ -11,23 +14,100 @@ class NakadiException(Exception):
         self.msg = msg
 
 
+class EndOfStreamException(Exception):
+    pass
+
+
+class EndOfStreamException0(Exception):
+    pass
+
+
 class NakadiStream():
     """
     Iterator that generates batches. This stream is either created by a
     get_subscription_events_stream method or get_event_type_events_stream
     method.
     """
+    BUFFER_SIZE = 64 * 1024
 
     def __init__(self, response):
         self.response = response
+        self.sock = self.response.raw.connection.sock
+
+        self.raw_buffer = b''
+        self.buffer = b''
         self.current_batch = None
         self.__it = response.iter_lines(chunk_size=1)
+        self.sock.settimeout(30)
+        self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
+    def read_buffer(self):
+        buffer = self.sock.recv(self.BUFFER_SIZE)
+        return buffer
+
+    def read_chunk(self):
+
+        if b'\r\n' not in self.raw_buffer:
+
+            while self.raw_buffer[-2:] != b'\r\n':
+                received_byte = self.sock.recv(1)
+                if received_byte == b'':
+                    raise EndOfStreamException
+                self.raw_buffer += received_byte
+            size_b = self.raw_buffer[:-2]
+            self.raw_buffer = b''
+        else:
+            size_b, self.raw_buffer = self.raw_buffer.split(b'\r\n', 1)
+        size = int(size_b, 16) + 2
+
+        Metrics.timer_start(self.get_stream_id() + '.chunk2')
+        data_read_arr = list()
+        remaining = size
+        data_read = self.raw_buffer
+        data_read_arr.append(data_read)
+        remaining -= len(data_read)
+        while remaining > 0:
+            Metrics.timer_start(self.get_stream_id() + '.chunk1')
+            data_read = self.sock.recv(self.BUFFER_SIZE)
+            Metrics.timer_stop(self.get_stream_id() + '.chunk1')
+            if data_read == b'':
+                raise EndOfStreamException
+            data_read_arr.append(data_read)
+            remaining -= len(data_read)
+        if remaining != 0:
+            self.raw_buffer = data_read_arr[-1][remaining:]
+        else:
+            self.raw_buffer = b''
+        Metrics.timer_stop(self.get_stream_id() + '.chunk2')
+
+        if len(data_read) + remaining == 1:
+            data_read_arr[-2] = data_read_arr[-2][:-1]
+            data_read_arr.pop(-1)
+        else:
+            data_read_arr[-1] = data_read_arr[-1][:remaining - 2]
+        data_b = b''.join(data_read_arr)
+
+        if size == 0:
+            raise EndOfStreamException0
+
+
+        return data_b
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        self.current_batch = self.__it.__next__().decode('utf-8')
+        data_read_arr = list()
+        data_read = self.buffer
+        data_read_arr.append(data_read)
+        while b'\n' not in data_read:
+            Metrics.timer_start(self.get_stream_id() + '.chunk')
+            data_read = self.read_chunk()
+            Metrics.timer_stop(self.get_stream_id() + '.chunk')
+            data_read_arr.append(data_read)
+        data_read_arr[-1], self.buffer = data_read_arr[-1].split(b'\n', 1)
+        data_b = b''.join(data_read_arr)
+        self.current_batch = data_b
         return self.current_batch
 
     def get_stream_id(self):
