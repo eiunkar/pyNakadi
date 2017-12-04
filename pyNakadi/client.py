@@ -1,9 +1,7 @@
 import json
-from functools import reduce
-import logging
-import time
 import socket
-
+import uuid
+from functools import reduce
 
 import requests
 
@@ -40,6 +38,10 @@ class NakadiStream():
         self.__it = response.iter_lines(chunk_size=1)
         self.sock.settimeout(30)
         self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        if 'X-Nakadi-StreamId' in self.response.headers:
+            self.stream_id = self.response.headers['X-Nakadi-StreamId']
+        else:
+            self.stream_id = str(uuid.uuid4())
 
     def read_buffer(self):
         buffer = self.sock.recv(self.BUFFER_SIZE)
@@ -60,16 +62,13 @@ class NakadiStream():
             size_b, self.raw_buffer = self.raw_buffer.split(b'\r\n', 1)
         size = int(size_b, 16) + 2
 
-        Metrics.timer_start(self.get_stream_id() + '.chunk2')
         data_read_arr = list()
         remaining = size
         data_read = self.raw_buffer
         data_read_arr.append(data_read)
         remaining -= len(data_read)
         while remaining > 0:
-            Metrics.timer_start(self.get_stream_id() + '.chunk1')
             data_read = self.sock.recv(self.BUFFER_SIZE)
-            Metrics.timer_stop(self.get_stream_id() + '.chunk1')
             if data_read == b'':
                 raise EndOfStreamException
             data_read_arr.append(data_read)
@@ -78,7 +77,6 @@ class NakadiStream():
             self.raw_buffer = data_read_arr[-1][remaining:]
         else:
             self.raw_buffer = b''
-        Metrics.timer_stop(self.get_stream_id() + '.chunk2')
 
         if len(data_read) + remaining == 1:
             data_read_arr[-2] = data_read_arr[-2][:-1]
@@ -90,7 +88,6 @@ class NakadiStream():
         if size == 0:
             raise EndOfStreamException0
 
-
         return data_b
 
     def __iter__(self):
@@ -101,9 +98,7 @@ class NakadiStream():
         data_read = self.buffer
         data_read_arr.append(data_read)
         while b'\n' not in data_read:
-            Metrics.timer_start(self.get_stream_id() + '.chunk')
             data_read = self.read_chunk()
-            Metrics.timer_stop(self.get_stream_id() + '.chunk')
             data_read_arr.append(data_read)
         data_read_arr[-1], self.buffer = data_read_arr[-1].split(b'\n', 1)
         data_b = b''.join(data_read_arr)
@@ -114,7 +109,7 @@ class NakadiStream():
         """
         :return: X-Nakadi-StreamId
         """
-        return self.response.headers['X-Nakadi-StreamId']
+        return self.stream_id
 
     def close(self):
         """
@@ -376,7 +371,12 @@ class NakadiClient:
                 stream_keep_alive_limit)
         if query_str != '':
             page += '?' + query_str[1:]
-        response = requests.get(page, headers=headers, stream=True)
+
+        s = requests.Session()
+        del (s.headers['Accept-Encoding'])
+        response = s.request(method='GET', url=page, headers=headers,
+                             stream=True)
+        # response = requests.get(page, headers=headers, stream=True)
         if response.status_code not in [200]:
             response_content_str = response.content.decode('utf-8')
             raise NakadiException(
