@@ -1,6 +1,7 @@
 import json
 from functools import reduce
 
+
 import requests
 
 
@@ -520,7 +521,10 @@ class NakadiClient:
         if query_str != '':
             page += '?' + query_str[1:]
         print(page)
-        response = requests.get(page, headers=headers, stream=True)
+        s = requests.Session()
+        del (s.headers['Accept-Encoding'])
+        response = s.request(method='GET', url=page, headers=headers,
+                             stream=True)
         if response.status_code not in [200]:
             response_content_str = response.content.decode('utf-8')
             raise NakadiException(
