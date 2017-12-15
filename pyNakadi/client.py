@@ -690,8 +690,9 @@ class NakadiClient:
         headers = self.json_content_header(headers)
         page = "{}/subscriptions/{}/cursors".format(self.nakadi_url,
                                                     subscription_id)
+        cursors_data = {'items': cursors}
         response = requests.patch(page, headers=headers,
-                                  json=cursors)
+                                  json=cursors_data)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [204]:
             raise NakadiException(
