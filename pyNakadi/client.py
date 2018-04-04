@@ -558,8 +558,6 @@ class NakadiClient:
                 msg="Error during delete_subscription. "
                     + "Message from server:{} {}".format(response.status_code,
                                                          response_content_str))
-        result_map = json.loads(response_content_str)
-        return result_map
 
     def get_subscription_events_stream(self,
                                        subscription_id,
