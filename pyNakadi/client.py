@@ -521,6 +521,27 @@ class NakadiClient:
         result_map = json.loads(response_content_str)
         return result_map
 
+    def create_subscription_v2(self, subscription_data_map):
+        """
+        POST /subscriptions
+        :param subscription_data_map:
+        :return:
+        """
+        headers = self.authorization_header()
+        headers = self.json_content_header(headers)
+        page = "{}/subscriptions".format(self.nakadi_url)
+        response = requests.post(page, headers=headers,
+                                 json=subscription_data_map)
+        response_content_str = response.content.decode('utf-8')
+        if response.status_code not in [200, 201]:
+            raise NakadiException(
+                code=response.status_code,
+                msg="Error during create_subscription. "
+                    + "Message from server:{} {}".format(response.status_code,
+                                                         response_content_str))
+        result_map = json.loads(response_content_str)
+        return (response.status_code, result_map)
+
     def get_subscription(self, subscription_id):
         """
         GET /subscriptions
