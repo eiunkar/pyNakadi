@@ -36,8 +36,8 @@ class NakadiStream():
         self.buffer = b''
         self.current_batch = None
         self.__it = response.iter_lines(chunk_size=1)
-        self.sock.settimeout(30)
-        self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        self.sock.socket.settimeout(30)
+        self.sock.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         if 'X-Nakadi-StreamId' in self.response.headers:
             self.stream_id = self.response.headers['X-Nakadi-StreamId']
         else:
