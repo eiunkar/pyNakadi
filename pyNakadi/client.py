@@ -208,7 +208,7 @@ class NakadiClient:
         response = requests.post(page, headers=headers,
                                  json=event_type_data_map)
         response_content_str = response.content.decode('utf-8')
-        if response.status_code not in [200]:
+        if response.status_code not in [201]:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during create_event_type. "
