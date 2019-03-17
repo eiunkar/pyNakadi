@@ -7,7 +7,7 @@ def readme():
 
 
 setup(name='pyNakadi',
-      version='0.2.12',
+      version='0.2.13',
       description='Python client for Nakadi',
       long_description=readme(),
       classifiers=[
