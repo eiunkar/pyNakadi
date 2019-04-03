@@ -36,14 +36,14 @@ class NakadiStream():
         self.buffer = b''
         self.current_batch = None
         self.__it = response.iter_lines(chunk_size=1)
-        
+
         if hasattr(self.sock, 'socket'):
             self.sock.socket.settimeout(30)
             self.sock.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         else:
             self.sock.settimeout(30)
             self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-            
+
         if 'X-Nakadi-StreamId' in self.response.headers:
             self.stream_id = self.response.headers['X-Nakadi-StreamId']
         else:
@@ -639,15 +639,16 @@ class NakadiClient:
                                                          response_content_str))
         return NakadiStream(response)
 
-    def get_subscription_stats(self, subscription_id):
+    def get_subscription_stats(self, subscription_id, show_time_lag=False):
         """
         GET /subscriptions/{subscription_id}/stats
         :param subscription_id:
+        :param show_time_lag:
         :return:
         """
         headers = self.authorization_header()
-        page = "{}/subscriptions/{}/stats".format(self.nakadi_url,
-                                                  subscription_id)
+        page = "{}/subscriptions/{}/stats?show_time_lag={}".format(self.nakadi_url,
+                                                                    subscription_id, str(show_time_lag).lower())
         response = requests.get(page, headers=headers)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
