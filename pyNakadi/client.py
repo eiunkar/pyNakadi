@@ -141,6 +141,15 @@ class NakadiClient:
         """
         self.token = token
         self.nakadi_url = nakadi_url
+        self.session = self.__create_session(token)
+
+    def __create_session(self, token):
+        result = requests.Session()
+        result.headers.update({
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        })
+        return result
 
     def set_token(self, token):
         """
@@ -182,10 +191,8 @@ class NakadiClient:
         GET /event-types
         :return:
         """
-        headers = self.authorization_header()
-        headers = self.json_content_header(headers)
         page = "{}/event-types".format(self.nakadi_url)
-        response = requests.get(page, headers=headers)
+        response = self.session.get(page)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
@@ -202,11 +209,8 @@ class NakadiClient:
         :param event_type_data_map:
         :return:
         """
-        headers = self.authorization_header()
-        headers = self.json_content_header(headers)
         page = "{}/event-types".format(self.nakadi_url)
-        response = requests.post(page, headers=headers,
-                                 json=event_type_data_map)
+        response = self.session.post(page, json=event_type_data_map)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [201]:
             raise NakadiException(
@@ -222,9 +226,8 @@ class NakadiClient:
         :param event_type_name:
         :return:
         """
-        headers = self.authorization_header()
         page = "{}/event-types/{}".format(self.nakadi_url, event_type_name)
-        response = requests.get(page, headers=headers)
+        response = self.session.get(page)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
@@ -242,10 +245,8 @@ class NakadiClient:
         :param event_type_data_map:
         :return:
         """
-        headers = self.authorization_header()
-        headers = self.json_content_header(headers)
         page = "{}/event-types/{}".format(self.nakadi_url, event_type_name)
-        response = requests.put(page, headers=headers, json=event_type_data_map)
+        response = self.session.put(page, json=event_type_data_map)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
@@ -262,9 +263,8 @@ class NakadiClient:
         :param event_type_name:
         :return:
         """
-        headers = self.authorization_header()
         page = "{}/event-types/{}".format(self.nakadi_url, event_type_name)
-        response = requests.delete(page, headers=headers)
+        response = self.session.delete(page)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
@@ -281,11 +281,9 @@ class NakadiClient:
         :param query_map:
         :return:
         """
-        headers = self.authorization_header()
-        headers = self.json_content_header(headers)
         page = "{}/event-types/{}/cursor-distances".format(self.nakadi_url,
                                                            event_type_name)
-        response = requests.post(page, headers=headers, json=query_map)
+        response = self.session.post(page, json=query_map)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
@@ -303,11 +301,9 @@ class NakadiClient:
         :param cursors_map:
         :return:
         """
-        headers = self.authorization_header()
-        headers = self.json_content_header(headers)
         page = "{}/event-types/{}/cursor-lag".format(self.nakadi_url,
                                                      event_type_name)
-        response = requests.post(page, headers=headers, json=cursors_map)
+        response = reqself.sessionuests.post(page, json=cursors_map)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
@@ -325,11 +321,9 @@ class NakadiClient:
         :param events:
         :return:
         """
-        headers = self.authorization_header()
-        headers = self.json_content_header(headers)
         page = "{}/event-types/{}/events".format(self.nakadi_url,
                                                  event_type_name)
-        response = requests.post(page, headers=headers, json=events)
+        response = self.session.post(page, json=events)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
@@ -365,7 +359,7 @@ class NakadiClient:
                                                  event_name)
         query_str = ''
         if batch_limit is not None:
-            query_str += '&batch_limit={}'.format(batch_limit)
+            query_str += 'batch_limit={}'.format(batch_limit)
         if stream_limit is not None:
             query_str += '&stream_limit={}'.format(stream_limit)
         if batch_flush_timeout is not None:
@@ -378,19 +372,23 @@ class NakadiClient:
         if query_str != '':
             page += '?' + query_str[1:]
 
-        s = requests.Session()
-        del (s.headers['Accept-Encoding'])
+        s = self.__create_session(self.token)
+        if 'Accept-Encoding' in s.headers:
+            del (s.headers['Accept-Encoding'])
+
         response = s.request(method='GET', url=page, headers=headers,
                              stream=True)
-        # response = requests.get(page, headers=headers, stream=True)
-        if response.status_code not in [200]:
-            response_content_str = response.content.decode('utf-8')
-            raise NakadiException(
-                code=response.status_code,
-                msg="Error during get_subscription_events_stream. "
-                    + "Message from server:{} {}".format(response.status_code,
-                                                         response_content_str))
-        return NakadiStream(response)
+
+        if response.status_code == 200:
+            return NakadiStream(response)
+
+        response_content_str = response.content.decode('utf-8')
+        raise NakadiException(
+            code=response.status_code,
+            msg="Error during get_subscription_events_stream. "
+                + "Message from server:{} {}".format(response.status_code,
+                                                        response_content_str))
+
 
     def get_event_type_partitions(self, event_type_name):
         """
@@ -398,10 +396,9 @@ class NakadiClient:
         :param event_type_name:
         :return:
         """
-        headers = self.authorization_header()
         page = "{}/event-types/{}/partitions".format(self.nakadi_url,
                                                      event_type_name)
-        response = requests.get(page, headers=headers)
+        response = self.session.get(page)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
@@ -419,11 +416,10 @@ class NakadiClient:
         :param partition_id:
         :return:
         """
-        headers = self.authorization_header()
         page = "{}/event-types/{}/partitions/{}".format(self.nakadi_url,
                                                         event_type_name,
                                                         partition_id)
-        response = requests.get(page, headers=headers)
+        response = self.session.get(page)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
@@ -451,7 +447,6 @@ class NakadiClient:
                        NakadiException(code=1, msg='limit must be <=1000'))
         self.assert_it(offset >= 0,
                        NakadiException(code=1, msg='offset must be >=0'))
-        headers = self.authorization_header()
         page = "{}/subscriptions".format(self.nakadi_url)
         query_str = "?limit=" + str(limit) + '&offset=' + str(offset)
         if owning_application is not None:
@@ -461,7 +456,7 @@ class NakadiClient:
                 lambda reduced, item: reduced + "&event_type=" + item,
                 event_type, '')
         page += query_str
-        response = requests.get(page, headers=headers)
+        response = self.session.get(page)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
@@ -475,10 +470,9 @@ class NakadiClient:
     def get_next_subscriptions(self, subscriptions_response):
         if 'next' not in subscriptions_response['_links']:
             return subscriptions_response
-        headers = self.authorization_header()
         page = '{}{}'.format(self.nakadi_url,
                              subscriptions_response['_links']['next']['href'])
-        response = requests.get(page, headers=headers)
+        response = self.session.get(page)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
@@ -492,10 +486,9 @@ class NakadiClient:
     def get_prev_subscriptions(self, subscriptions_response):
         if 'prev' not in subscriptions_response['_links']:
             return subscriptions_response
-        headers = self.authorization_header()
         page = '{}{}'.format(self.nakadi_url,
                              subscriptions_response['_links']['prev']['href'])
-        response = requests.get(page, headers=headers)
+        response = self.session.get(page)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
@@ -512,10 +505,8 @@ class NakadiClient:
         :param subscription_data_map:
         :return:
         """
-        headers = self.authorization_header()
-        headers = self.json_content_header(headers)
         page = "{}/subscriptions".format(self.nakadi_url)
-        response = requests.post(page, headers=headers,
+        response = self.session.post(page,
                                  json=subscription_data_map)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200, 201]:
@@ -533,10 +524,8 @@ class NakadiClient:
         :param subscription_data_map:
         :return:
         """
-        headers = self.authorization_header()
-        headers = self.json_content_header(headers)
         page = "{}/subscriptions".format(self.nakadi_url)
-        response = requests.post(page, headers=headers,
+        response = self.session.post(page,
                                  json=subscription_data_map)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200, 201]:
@@ -554,10 +543,9 @@ class NakadiClient:
         :param subscription_id:
         :return:
         """
-        headers = self.authorization_header()
         page = "{}/subscriptions/{}".format(self.nakadi_url,
                                             subscription_id)
-        response = requests.get(page, headers=headers)
+        response = self.session.get(page)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
@@ -574,10 +562,9 @@ class NakadiClient:
         :param subscription_id:
         :return:
         """
-        headers = self.authorization_header()
         page = "{}/subscriptions/{}".format(self.nakadi_url,
                                             subscription_id)
-        response = requests.delete(page, headers=headers)
+        response = self.session.delete(page)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [204]:
             raise NakadiException(
@@ -605,12 +592,11 @@ class NakadiClient:
         :param stream_keep_alive_limit:
         :return: NakadiStream
         """
-        headers = self.authorization_header()
         page = "{}/subscriptions/{}/events".format(self.nakadi_url,
                                                    subscription_id)
         query_str = ''
         if max_uncommitted_events is not None:
-            query_str += '&max_uncommitted_events={}'.format(
+            query_str += 'max_uncommitted_events={}'.format(
                 max_uncommitted_events)
         if batch_limit is not None:
             query_str += '&batch_limit={}'.format(batch_limit)
@@ -626,9 +612,10 @@ class NakadiClient:
         if query_str != '':
             page += '?' + query_str[1:]
         print(page)
-        s = requests.Session()
-        del (s.headers['Accept-Encoding'])
-        response = s.request(method='GET', url=page, headers=headers,
+        s = self.__create_session(token)
+        if 'Accept-Encoding' in s.headers:
+            del (s.headers['Accept-Encoding'])
+        response = s.request(method='GET', url=page,
                              stream=True)
         if response.status_code not in [200]:
             response_content_str = response.content.decode('utf-8')
@@ -646,10 +633,9 @@ class NakadiClient:
         :param show_time_lag:
         :return:
         """
-        headers = self.authorization_header()
         page = "{}/subscriptions/{}/stats?show_time_lag={}".format(self.nakadi_url,
                                                                     subscription_id, str(show_time_lag).lower())
-        response = requests.get(page, headers=headers)
+        response = self.session.get(page)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
@@ -666,10 +652,9 @@ class NakadiClient:
         :param subscription_id:
         :return:
         """
-        headers = self.authorization_header()
         page = "{}/subscriptions/{}/cursors".format(self.nakadi_url,
                                                     subscription_id)
-        response = requests.get(page, headers=headers)
+        response = self.session.get(page)
         response_content_str = response.content.decode('utf-8')
         if response.status_code not in [200]:
             raise NakadiException(
@@ -688,22 +673,25 @@ class NakadiClient:
         :param cursors:
         :return:
         """
-        headers = self.authorization_header()
-        headers = self.json_content_header(headers)
-        headers['X-Nakadi-StreamId'] = stream_id
+        headers = {
+            "X-Nakadi-StreamId": stream_id
+        }
         page = "{}/subscriptions/{}/cursors".format(self.nakadi_url,
                                                     subscription_id)
         cursors_data = {'items': cursors}
-        response = requests.post(page, headers=headers,
+        response = self.session.post(page, headers=headers,
                                  json=cursors_data)
         response_content_str = response.content.decode('utf-8')
-        if response.status_code not in [204]:
-            raise NakadiException(
-                code=response.status_code,
-                msg="Error during commit_subscription_cursors. "
-                    + "Message from server:{} {}".format(response.status_code,
-                                                         response_content_str))
-        return True
+
+        if response.status_code == 204:
+            return True
+
+        raise NakadiException(
+            code=response.status_code,
+            msg="Error during commit_subscription_cursors. "
+                + "Message from server:{} {}".format(response.status_code,
+                                                        response_content_str))
+
 
     def reset_subscription_cursors(self, subscription_id, cursors):
         """
@@ -712,18 +700,16 @@ class NakadiClient:
         :param cursors:
         :return:
         """
-        headers = self.authorization_header()
-        headers = self.json_content_header(headers)
         page = "{}/subscriptions/{}/cursors".format(self.nakadi_url,
                                                     subscription_id)
         cursors_data = {'items': cursors}
-        response = requests.patch(page, headers=headers,
-                                  json=cursors_data)
+        response = self.session.patch(page, json=cursors_data)
         response_content_str = response.content.decode('utf-8')
-        if response.status_code not in [204]:
-            raise NakadiException(
-                code=response.status_code,
-                msg="Error during reset_subscription_cursors. "
-                    + "Message from server:{} {}".format(response.status_code,
-                                                         response_content_str))
-        return True
+        if response.status_code == 204:
+            return True
+
+        raise NakadiException(
+            code=response.status_code,
+            msg="Error during reset_subscription_cursors. "
+                + "Message from server:{} {}".format(response.status_code,
+                                                        response_content_str))
