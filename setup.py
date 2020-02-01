@@ -6,8 +6,13 @@ def readme():
         return f.read()
 
 
+def get_version():
+    with open('VERSION') as f:
+        return f.read()
+
+
 setup(name='pyNakadi',
-      version='0.2.13',
+      version=get_version(),
       description='Python client for Nakadi',
       long_description=readme(),
       classifiers=[
