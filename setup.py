@@ -1,4 +1,5 @@
 from setuptools import setup
+from readme_renderer import markdown
 
 
 def readme():
@@ -14,10 +15,11 @@ def get_version():
 setup(name='pyNakadi',
       version=get_version(),
       description='Python client for Nakadi',
-      long_description=readme(),
+      long_description=markdown.render(readme()),
+      long_description_content_type="text/markdown",
       classifiers=[
           'Development Status :: 3 - Alpha',
-          'Programming Language :: Python :: 3.5',
+          'Programming Language :: Python :: 3.6',
           'Intended Audience :: Developers',
           'Programming Language :: Python :: Implementation :: CPython',
           'Topic :: Software Development :: Libraries :: Python Modules'
