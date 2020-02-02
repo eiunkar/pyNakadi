@@ -1,5 +1,4 @@
-
-#For developers
+# For developers
 
 ## Pull requests
 
