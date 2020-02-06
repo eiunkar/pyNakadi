@@ -11,6 +11,8 @@ You can find pyPI project here:
 
 https://pypi.python.org/pypi/pyNakadi/
 
+![Downloads](./docs/download.png)
+
 
 ## Examples
 ### Post event
