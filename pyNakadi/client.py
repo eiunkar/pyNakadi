@@ -240,8 +240,7 @@ class NakadiClient:
                 code=response.status_code,
                 msg="Error during update_event_type. "
                     + f"Message from server:{response.status_code} {response_content_str}")
-        result_map = json.loads(response_content_str)
-        return result_map
+        return True
 
     def delete_event_type(self, event_type_name):
         """
