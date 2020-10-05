@@ -4,7 +4,7 @@ import json
 import pytest
 import subprocess
 from subprocess import Popen
-from tempfile import TemporaryDirectory, TemporaryFile
+from tempfile import TemporaryDirectory, NamedTemporaryFile
 from datetime import datetime
 
 from pyNakadi import NakadiClient, NakadiException
@@ -26,8 +26,8 @@ def nakadi_url():
         pass
         # build docker
         temp_dir = TemporaryDirectory()
-        docker_log_file = TemporaryFile()
-        print()
+        docker_log_file = NamedTemporaryFile()
+        print(f'Logging into {docker_log_file.name}')
         print("Cloning nakadi repo ...")
         git_clone_repo(NAKADI_GIT_REPO, temp_dir.name)
         print(f'Checking out {NAKADI_TEST_TAG} ...')
