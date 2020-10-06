@@ -1,5 +1,8 @@
 from setuptools import setup
-from readme_renderer import markdown
+try:
+    from readme_renderer import markdown
+except ImportError:
+    markdown = None
 
 
 def readme():
@@ -15,7 +18,7 @@ def get_version():
 setup(name='pyNakadi',
       version=get_version(),
       description='Python client for Nakadi',
-      long_description=markdown.render(readme()),
+      long_description=markdown.render(readme()) if markdown else readme(),
       long_description_content_type="text/markdown",
       classifiers=[
           'Development Status :: 3 - Alpha',
