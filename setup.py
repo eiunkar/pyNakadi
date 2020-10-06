@@ -1,13 +1,4 @@
 from setuptools import setup
-try:
-    from readme_renderer import markdown
-except ImportError:
-    markdown = None
-
-
-def readme():
-    with open('README.md') as f:
-        return f.read()
 
 
 def get_version():
@@ -18,8 +9,9 @@ def get_version():
 setup(name='pyNakadi',
       version=get_version(),
       description='Python client for Nakadi',
-      long_description=markdown.render(readme()) if markdown else readme(),
-      long_description_content_type="text/markdown",
+      long_description="Python client for Nakadi\n\n"
+                       "Please visit github page of the project for more information.\n\n"
+                       "https://github.com/eiunkar/pyNakadi",
       classifiers=[
           'Development Status :: 3 - Alpha',
           'Programming Language :: Python :: 3.6',
