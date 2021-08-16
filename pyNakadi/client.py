@@ -137,7 +137,7 @@ class NakadiStream():
 
 
 class NakadiClient:
-    def __init__(self, token, nakadi_url):
+    def __init__(self, token, nakadi_url, verify_tls_certificate=True):
         """
         Initiates a Nakadi client using the token and aiming for url
         :param token: token string to be used
@@ -145,14 +145,15 @@ class NakadiClient:
         """
         self.token = token
         self.nakadi_url = nakadi_url
-        self.session = self.__create_session(token)
+        self.session = self.__create_session(token, verify_tls_certificate)
 
-    def __create_session(self, token):
+    def __create_session(self, token, verify_tls_certificate):
         result = requests.Session()
         result.headers.update({
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
         })
+        result.verify = verify_tls_certificate
         return result
 
     @classmethod
