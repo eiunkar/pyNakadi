@@ -8,12 +8,13 @@ import copy
 
 
 class NakadiException(Exception):
-    def __init__(self, code, msg):
+    def __init__(self, code, msg, headers=None):
         self.code = code
         self.msg = msg
+        self.headers = headers or {}
 
     def __str__(self):
-        return f"NakadiException(code={self.code}, msg={self.msg})"
+        return f"NakadiException(code={self.code}, msg={self.msg}, headers={self.headers})"
 
 
 class EndOfStreamException(Exception):
@@ -172,7 +173,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during get_metrics. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -188,7 +190,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during get_event_types. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -205,7 +208,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during create_event_type. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         return True
 
     def get_event_type(self, event_type_name):
@@ -221,7 +225,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during get_event_type. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -239,7 +244,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during update_event_type. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         return True
 
     def delete_event_type(self, event_type_name):
@@ -255,7 +261,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during delete_event_type. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         return True
 
     def get_event_type_cursor_distances(self, event_type_name, query_map):
@@ -272,7 +279,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during get_event_type_cursor_distances. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -290,7 +298,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during get_event_type_cursor_lag. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -308,7 +317,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during post_events. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         return True
 
     def get_event_type_events_stream(self,
@@ -360,7 +370,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during get_subscription_events_stream. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         return NakadiStream(response)
 
     def get_event_type_partitions(self, event_type_name):
@@ -376,7 +387,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during get_event_type_partitions. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -394,7 +406,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during get_event_type_partition. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -430,7 +443,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during get_subscriptions. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -444,7 +458,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during get_subscriptions. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -458,7 +473,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during get_subscriptions. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -476,7 +492,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during create_subscription. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -494,7 +511,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during create_subscription. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         result_map = json.loads(response_content_str)
         return (response.status_code, result_map)
 
@@ -511,7 +529,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during get_subscription. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -528,7 +547,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during delete_subscription. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
 
     def get_subscription_events_stream(self,
                                        subscription_id,
@@ -579,7 +599,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during get_subscription_events_stream. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         return NakadiStream(response)
 
     def get_subscription_stats(self, subscription_id, show_time_lag=False):
@@ -596,7 +617,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during get_subscription_stats. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -613,7 +635,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during get_subscription_stats. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         result_map = json.loads(response_content_str)
         return result_map
 
@@ -636,7 +659,8 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during commit_subscription_cursors. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         return True
 
     def reset_subscription_cursors(self, subscription_id, cursors):
@@ -654,5 +678,6 @@ class NakadiClient:
             raise NakadiException(
                 code=response.status_code,
                 msg="Error during reset_subscription_cursors. "
-                    + f"Message from server:{response.status_code} {response_content_str}")
+                    + f"Message from server:{response.status_code} {response_content_str}",
+                headers=response.headers)
         return True
